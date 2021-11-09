@@ -1,0 +1,122 @@
+{% if products %}
+    <div class="row">
+        <div class="product-thumb col-md-6 col-sm-6 col-xs-6" style="height:350px; padding: 10px;">
+            {% for product in products %}
+                <p>
+                    <a data-bs-toggle="collapse" href="#productOpen-{{ product.product_id }}" data-toggle="collapse">
+                        <i class="fa fa-plus"></i> <span id="pn-{{ product.product_id }}">{{ product.name }}</span>
+                    </a>
+                </p>
+                <div class="product-layout col-md-12 collapse" id="productOpen-{{ product.product_id }}">
+                    <div class="product-thumb transition">
+                        <div class="image col-md-3">
+                            <a href="{{ product.href }}">
+                                <img src="{{ product.thumb }}" alt="{{ product.name }}" title="{{ product.name }}"
+                                     class="img-responsive"/>
+                            </a>
+                        </div>
+                        <div class="col-md-9">
+                            <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+                            <p>{{ product.description }}</p>
+                            {% if product.price %}
+                                <p class="price">
+                                    {% if not product.special %}
+                                        <span id="pp-{{ product.product_id }}" class="hidden">{{ product.price }}</span>
+                                        {{ product.price_format }}
+                                    {% else %}
+                                        <span id="pp-{{ product.product_id }}" class="hidden">{{ product.special }}</span>
+                                        <span class="price-new">{{ product.special_format }}</span> <span
+                                            class="price-old">{{ product.price_format }}</span>
+                                    {% endif %}
+                                    {% if product.tax %}
+                                        <span class="price-tax">{{ text_tax }} {{ product.tax }}</span>
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="button-group col-md-12">
+                            <button type="button" onclick="addGift({{ product.product_id }})">
+                                <i class="fa fa-plus-circle"></i>
+                                <span class="hidden-xs hidden-sm hidden-md">{{ gift_button }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="product-thumb col-md-6 col-sm-6 col-xs-6" style="height:350px">
+            <div id="gift-cart"></div>
+        </div>
+        <div class="col-md-6 col-sm-12 col-xs-12 text-center col-md-offset-3">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="input-group">
+                        <span class="input-group-addon" id="basic-addon1">{{ gift_price }}</span>
+                        <input type="text" class="form-control" disabled id="price-one">
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon" id="basic-addon1">{{ gift_price_all }}</span>
+                        <input type="text" class="form-control" disabled id="price-all">
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <button class="btn btn-success">{{ gift_get }}</button>
+                    <button class="btn btn-danger" onclick="delCart()">{{ gift_delete }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    function addGift(id) {
+        let product_name = $('#pn-' + id).html();
+        let cart_gift = $('#gift-cart');
+        let product_exist = ($('#padd-' + id));
+
+        if (product_exist.length === 0) {
+            cart_gift.append('<div class="panel panel-default" id="padd-' + id + '">' +
+                '<div class="panel-body"><p>' + product_name + '</p><button type="button" onclick="delProduct(' + id + ')" class="btn"><i class="fa fa-trash text-danger"></i></button>' +
+                '<input type="text" disabled id="pqc-' + id + '" min="1" value="1" class="btn text-primary" onchange="changePrice(' + id + ')" style="width:50%">' +
+                '<button type="button" onclick="decreaseQuantityProduct(' + id + ')" class="btn"><i class="fa fa-minus-circle text-info"></i></button>' +
+                '<button type="button" onclick="increaseQuantityProduct(' + id + ')" class="btn"><i class="fa fa-plus-circle text-info"></i></button>' +
+                '</div>' +
+                '</div>');
+            changePrice(id, 1);
+        }
+    }
+
+    function decreaseQuantityProduct(id) {
+        let product_quantity_cart = $('#pqc-' + id);
+
+        if (product_quantity_cart.val() > 1) {
+            product_quantity_cart.val(Number(product_quantity_cart.val()) - 1);
+            changePrice(id, 0, 1);
+        }
+    }
+
+    function increaseQuantityProduct(id) {
+        let product_quantity_cart = $('#pqc-' + id);
+        product_quantity_cart.val(Number(product_quantity_cart.val()) + 1);
+        changePrice(id, 1, 1);
+    }
+
+    function changePrice(id, type = 1, product_quantity = 1) {
+        let product_price = Number($('#pp-' + id).html());
+        let price_one = $('#price-one');
+        let new_price = (type === 1) ? Number(price_one.val()) + product_price * product_quantity : Number(price_one.val()) - product_price * product_quantity;
+        price_one.val(new_price);
+    }
+
+    function delProduct(id) {
+        let product_quantity_cart = $('#pqc-' + id).val();
+        changePrice(id, 0, product_quantity_cart);
+        $('#padd-' + id).remove();
+    }
+
+    function delCart() {
+        $('#gift-cart').empty();
+        $('#price-one').val('');
+        $('#price-all').val('');
+    }
+</script>

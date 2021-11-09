@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Collect a gift</name>
+	<code>wps_collect_gift</code>
+	<version>1.0.0</version>
+	<author>Victor Galiuzov</author>
+	<link>https://webpagestudio.net</link>
+</modification>
