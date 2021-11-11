@@ -94,6 +94,14 @@ class ControllerExtensionModuleCollectGift extends Controller
             $data['email'] = $this->config->get('config_email');
         }
 
+        if (isset($this->request->post['viber'])) {
+            $data['viber'] = $this->request->post['viber'];
+        } elseif (!empty($module_info)) {
+            $data['viber'] = $module_info['viber'];
+        } else {
+            $data['viber'] = '';
+        }
+
         if (isset($this->request->post['category'])) {
             $data['category'] = $this->request->post['category'];
         } elseif (!empty($module_info)) {

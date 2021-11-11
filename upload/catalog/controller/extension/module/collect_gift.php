@@ -6,7 +6,6 @@ class ControllerExtensionModuleCollectGift extends Controller
     {
         $this->load->language('extension/module/collect_gift');
         $this->load->model('catalog/product');
-        $this->load->model('tool/image');
 
         $data = [];
         $filter_data = ['filter_category_id' => $setting['category'], 'order' => 'DESC',];
@@ -40,7 +39,7 @@ class ControllerExtensionModuleCollectGift extends Controller
 
                 $data['products'][] = [
                     'product_id' => $result['product_id'],
-                    'thumb' => ($result['image']) ? 'image/'.$result['image'] : 'image/placeholder.png',
+                    'thumb' => ($result['image']) ? 'image/' . $result['image'] : 'image/placeholder.png',
                     'name' => $result['name'],
                     'description' => utf8_substr(trim(strip_tags(html_entity_decode($result['description'], ENT_QUOTES, 'UTF-8'))), 0, $this->config->get('theme_' . $this->config->get('config_theme') . '_product_description_length')) . '..',
                     'price' => round($result['price']),
@@ -49,11 +48,24 @@ class ControllerExtensionModuleCollectGift extends Controller
                     'special_format' => $special,
                     'tax' => $tax,
                     'rating' => $rating,
-                    'href' => $this->url->link('product/product', 'product_id=' . $result['product_id'])
+                    'href' => $this->url->link('product/product', 'product_id=' . $result['product_id']),
                 ];
+                $data['currency'] = $this->session->data['currency'];
             }
 
             return $this->load->view('extension/module/collect_gift', $data);
         }
+    }
+
+    public function send()
+    {
+        $json = [];
+        $this->load->language('extension/module/collect_gift');
+
+        $json['message'] = '';
+        $json['status'] = 'success';
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
     }
 }

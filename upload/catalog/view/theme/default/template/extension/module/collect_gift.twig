@@ -1,5 +1,11 @@
 {% if products %}
     <div class="row">
+        <div class="alert alert-success gift-success" role="alert" style="display: none">
+            {{ gift_send_success }}
+        </div>
+        <div class="alert alert-danger gift-error" role="alert" style="display: none">
+            {{ gift_send_danger }}
+        </div>
         <div class="product-thumb col-md-6 col-sm-6 col-xs-6" style="height:350px; padding: 10px;">
             {% for product in products %}
                 <p>
@@ -24,7 +30,8 @@
                                         <span id="pp-{{ product.product_id }}" class="hidden">{{ product.price }}</span>
                                         {{ product.price_format }}
                                     {% else %}
-                                        <span id="pp-{{ product.product_id }}" class="hidden">{{ product.special }}</span>
+                                        <span id="pp-{{ product.product_id }}"
+                                              class="hidden">{{ product.special }}</span>
                                         <span class="price-new">{{ product.special_format }}</span> <span
                                             class="price-old">{{ product.price_format }}</span>
                                     {% endif %}
@@ -51,16 +58,30 @@
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div class="input-group">
-                        <span class="input-group-addon" id="basic-addon1">{{ gift_price }}</span>
+                        <span class="input-group-addon">{{ gift_price }}</span>
                         <input type="text" class="form-control" disabled id="price-one">
+                        <span class="input-group-addon">{{ currency }}</span>
                     </div>
                     <div class="input-group">
-                        <span class="input-group-addon" id="basic-addon1">{{ gift_price_all }}</span>
+                        <span class="input-group-addon">{{ gift_count }}</span>
+                        <input type="text" class="form-control" disabled id="quantity-gift">
+                        <span class="input-group-addon">
+                            <button type="button" onclick="decreaseQuantity()">
+                                <i class="fa fa-minus-circle text-info"></i>
+                            </button>
+                            <button type="button" onclick="increaseQuantity()">
+                                <i class="fa fa-plus-circle text-info"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">{{ gift_price_all }}</span>
                         <input type="text" class="form-control" disabled id="price-all">
+                        <span class="input-group-addon">{{ currency }}</span>
                     </div>
                 </div>
                 <div class="panel-footer">
-                    <button class="btn btn-success">{{ gift_get }}</button>
+                    <button class="btn btn-success" onclick="send()">{{ gift_get }}</button>
                     <button class="btn btn-danger" onclick="delCart()">{{ gift_delete }}</button>
                 </div>
             </div>
@@ -69,21 +90,68 @@
 {% endif %}
 
 <script>
+    function send() {
+        let array = [];
+        let name = $('#gift-cart .name-product').val();
+        let quantity = $('#gift-cart .quantity-product').val();
+
+
+        array.push({
+            'name': name,
+            'quantity': quantity,
+        });
+
+        $.ajax({
+            url: 'index.php?route=extension/module/collect_gift/send',
+            type: 'POST',
+            dataType: 'json',
+            data: {'data' : JSON.stringify(array)},
+            timeout: 10000,
+            success: function (data) {
+                if (data['status'] === 'success') {
+                    $('.gift-success').show('slow');
+                } else {
+                    $('.gift-error').show('slow');
+                }
+            },
+            error: function (request, status, err) {
+                console.log(err);
+                $('.gift-error').show('slow');
+            }
+        });
+    }
+
     function addGift(id) {
         let product_name = $('#pn-' + id).html();
         let cart_gift = $('#gift-cart');
         let product_exist = ($('#padd-' + id));
 
         if (product_exist.length === 0) {
-            cart_gift.append('<div class="panel panel-default" id="padd-' + id + '">' +
-                '<div class="panel-body"><p>' + product_name + '</p><button type="button" onclick="delProduct(' + id + ')" class="btn"><i class="fa fa-trash text-danger"></i></button>' +
-                '<input type="text" disabled id="pqc-' + id + '" min="1" value="1" class="btn text-primary" onchange="changePrice(' + id + ')" style="width:50%">' +
+            cart_gift.append('<div class="panel panel-default panel-product" id="padd-' + id + '">' +
+                '<div class="panel-body"><p class="name-product">' + product_name + '</p><button type="button" onclick="delProduct(' + id + ')" class="btn"><i class="fa fa-trash text-danger"></i></button>' +
+                '<input type="text" disabled id="pqc-' + id + '" min="1" value="1" class="btn text-primary quantity-product" onchange="changePrice(' + id + ')" style="width:50%">' +
                 '<button type="button" onclick="decreaseQuantityProduct(' + id + ')" class="btn"><i class="fa fa-minus-circle text-info"></i></button>' +
                 '<button type="button" onclick="increaseQuantityProduct(' + id + ')" class="btn"><i class="fa fa-plus-circle text-info"></i></button>' +
                 '</div>' +
                 '</div>');
+            $('#quantity-gift').val(1);
             changePrice(id, 1);
         }
+    }
+
+    function decreaseQuantity() {
+        let qg = $('#quantity-gift').val();
+
+        if (qg > 1) {
+            $('#quantity-gift').val(Number(qg) - 1);
+            $('#price-all').val($('#price-one').val() * $('#quantity-gift').val());
+        }
+    }
+
+    function increaseQuantity() {
+        let qg = $('#quantity-gift').val();
+        $('#quantity-gift').val(Number(qg) + 1);
+        $('#price-all').val($('#price-one').val() * $('#quantity-gift').val());
     }
 
     function decreaseQuantityProduct(id) {
@@ -104,8 +172,10 @@
     function changePrice(id, type = 1, product_quantity = 1) {
         let product_price = Number($('#pp-' + id).html());
         let price_one = $('#price-one');
-        let new_price = (type === 1) ? Number(price_one.val()) + product_price * product_quantity : Number(price_one.val()) - product_price * product_quantity;
-        price_one.val(new_price);
+        let price_all = $('#price-all');
+        let new_price_gift = (type === 1) ? Number(price_one.val()) + product_price * product_quantity : Number(price_one.val()) - product_price * product_quantity;
+        price_one.val(new_price_gift);
+        price_all.val(Number($('#price-one').val()) * Number($('#quantity-gift').val()));
     }
 
     function delProduct(id) {
